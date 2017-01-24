@@ -1,0 +1,16 @@
+[
+{
+  "modid": "util",
+  "name": "Utility",
+  "description": "Some helpful utilities",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["StarTux"],
+  "credits": "StarTux for Winthier",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
