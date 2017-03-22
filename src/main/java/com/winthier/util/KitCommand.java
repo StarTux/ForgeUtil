@@ -1,20 +1,20 @@
 package com.winthier.util;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommand;
 import net.minecraft.command.ICommandSender;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.ChatComponentText;
-import net.minecraft.util.ChunkCoordinates;
-import net.minecraft.world.Teleporter;
-import net.minecraft.world.WorldServer;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.TextComponentString;
+import net.minecraftforge.fml.common.FMLCommonHandler;
+
+import javax.annotation.Nullable;
 
 public class KitCommand implements ICommand
 {
@@ -40,8 +40,7 @@ public class KitCommand implements ICommand
     }
 
     @Override
-    public void processCommand(ICommandSender sender, String[] args)
-    {
+    public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
         // Check syntax
         if (args.length != 0) {
             usage(sender);
@@ -50,7 +49,7 @@ public class KitCommand implements ICommand
         // Fetch player
         EntityPlayerMP player = sender instanceof EntityPlayerMP ? (EntityPlayerMP)sender : null;
         if (player == null) {
-            sender.addChatMessage(new ChatComponentText("Player expected"));
+            sender.addChatMessage(new TextComponentString("Player expected"));
             return;
         }
         // Get and set last use
@@ -60,40 +59,37 @@ public class KitCommand implements ICommand
             long dist = System.currentTimeMillis() - lastUse;
             dist /= 1000;
             if (dist < 60 * 60 * 24) {
-                sender.addChatMessage(new ChatComponentText("You are still on cooldown."));
+                sender.addChatMessage(new TextComponentString("You are still on cooldown."));
                 return;
             }
         }
         lastUses.put(uuid, System.currentTimeMillis());
         // Give items
-        String name = player.getCommandSenderName();
+        String name = player.getCommandSenderEntity().getName();
         consoleCommand("give " + name + " minecraft:stone_pickaxe");
         consoleCommand("give " + name + " minecraft:stone_sword");
         consoleCommand("give " + name + " minecraft:planks 32");
         consoleCommand("give " + name + " minecraft:bread 32");
         consoleCommand("give " + name + " minecraft:torch 32");
-        sender.addChatMessage(new ChatComponentText("Enjoy your starter kit!"));
-    }
-
-    void consoleCommand(String cmd) {
-        MinecraftServer.getServer().getCommandManager().executeCommand(MinecraftServer.getServer(), cmd);
-    }
-
-    void usage(ICommandSender sender) {
-        sender.addChatMessage(new ChatComponentText("/Kit"));
+        sender.addChatMessage(new TextComponentString("Enjoy your starter kit!"));
     }
 
     @Override
-    public boolean canCommandSenderUseCommand(ICommandSender sender)
-    {
+    public boolean checkPermission(MinecraftServer server, ICommandSender sender) {
         return true;
     }
 
     @Override
-    public List addTabCompletionOptions(ICommandSender icommandsender,
-                                        String[] astring)
-    {
+    public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos pos) {
         return null;
+    }
+
+    void consoleCommand(String cmd) {
+        FMLCommonHandler.instance().getMinecraftServerInstance().getCommandManager().executeCommand(UtilMod.getServer(), cmd);
+    }
+
+    void usage(ICommandSender sender) {
+        sender.addChatMessage(new TextComponentString("/Kit"));
     }
 
     @Override
@@ -102,9 +98,9 @@ public class KitCommand implements ICommand
         return false;
     }
 
+
     @Override
-    public int compareTo(Object o)
-    {
+    public int compareTo(ICommand o) {
         return 0;
     }
 }

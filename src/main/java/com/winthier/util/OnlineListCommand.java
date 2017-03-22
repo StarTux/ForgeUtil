@@ -8,13 +8,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.command.CommandBase;
+import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.ChatComponentText;
-import net.minecraft.util.ChunkCoordinates;
+import net.minecraft.util.text.TextComponentString;
 
 public class OnlineListCommand extends CommandBase
 {
@@ -37,13 +34,12 @@ public class OnlineListCommand extends CommandBase
     }
 
     @Override
-    public void processCommand(ICommandSender sender, String[] args)
-    {
+    public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
         showOnlineList(sender);
     }
 
     @Override
-    public boolean canCommandSenderUseCommand(ICommandSender sender)
+    public boolean checkPermission(MinecraftServer server, ICommandSender sender)
     {
         return true;
     }
@@ -67,7 +63,7 @@ public class OnlineListCommand extends CommandBase
         }
         String[] serverNames = serverList.keySet().toArray(new String[0]);
         Arrays.sort(serverNames);
-        sender.addChatMessage(new ChatComponentText("§3§lPlayer List§r §3(§r"+totalCount+"§3)"));
+        UtilMod.addChatMessage(sender, "§3§lPlayer List§r §3(§r"+totalCount+"§3)");
         for (String serverName: serverNames) {
             OnlinePlayer[] playerArray = serverList.get(serverName).toArray(new OnlinePlayer[0]);
             if (playerArray.length == 0) continue;
@@ -79,7 +75,7 @@ public class OnlineListCommand extends CommandBase
             for (OnlinePlayer player: playerArray) {
                 sb.append("§r " + player.getName());
             }
-            sender.addChatMessage(new ChatComponentText(sb.toString()));
+            UtilMod.addChatMessage(sender, sb.toString());
         }
     }
 }

@@ -2,22 +2,24 @@ package com.winthier.util;
 
 import com.winthier.connect.*;
 import com.winthier.connect.packet.*;
-import cpw.mods.fml.common.FMLCommonHandler;
-import cpw.mods.fml.common.Mod.EventHandler;
-import cpw.mods.fml.common.Mod;
-import cpw.mods.fml.common.event.FMLInitializationEvent;
-import cpw.mods.fml.common.event.FMLServerStartingEvent;
-import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-import cpw.mods.fml.common.gameevent.TickEvent;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import ibxm.Player;
+import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.init.Blocks;
+import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.TextFormatting;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.Mod.EventHandler;
+import net.minecraftforge.fml.common.event.FMLInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 @Mod(modid = UtilMod.MODID, version = UtilMod.VERSION, acceptableRemoteVersions="*")
 public class UtilMod extends AbstractConnectHandler
@@ -37,14 +39,40 @@ public class UtilMod extends AbstractConnectHandler
     final WhisperCommand whisperCommand = new WhisperCommand();
     final OnlineListCommand onlineListCommand = new OnlineListCommand();
     long ticks = 0;
+    static final Map<String, String> colorStrings = new HashMap<String, String>();
+
+    static{
+        colorStrings.put("§0", TextFormatting.BLACK.toString());
+        colorStrings.put("§1", TextFormatting.DARK_BLUE.toString());
+        colorStrings.put("§2", TextFormatting.DARK_GREEN.toString());
+        colorStrings.put("§3", TextFormatting.DARK_AQUA.toString());
+        colorStrings.put("§4", TextFormatting.DARK_RED.toString());
+        colorStrings.put("§5", TextFormatting.DARK_PURPLE.toString());
+        colorStrings.put("§6", TextFormatting.GOLD.toString());
+        colorStrings.put("§7", TextFormatting.GRAY.toString());
+        colorStrings.put("§8", TextFormatting.DARK_GRAY.toString());
+        colorStrings.put("§9", TextFormatting.BLUE.toString());
+        colorStrings.put("§a", TextFormatting.GREEN.toString());
+        colorStrings.put("§b", TextFormatting.AQUA.toString());
+        colorStrings.put("§c", TextFormatting.RED.toString());
+        colorStrings.put("§d", TextFormatting.LIGHT_PURPLE.toString());
+        colorStrings.put("§e", TextFormatting.YELLOW.toString());
+        colorStrings.put("§f", TextFormatting.WHITE.toString());
+        colorStrings.put("§k", TextFormatting.OBFUSCATED.toString());
+        colorStrings.put("§l", TextFormatting.BOLD.toString());
+        colorStrings.put("§m", TextFormatting.STRIKETHROUGH.toString());
+        colorStrings.put("§n", TextFormatting.UNDERLINE.toString());
+        colorStrings.put("§o", TextFormatting.ITALIC.toString());
+        colorStrings.put("§r", TextFormatting.RESET.toString());
+    }
     
     @EventHandler
     public void init(FMLInitializationEvent event)
     {
-        FMLCommonHandler.instance().bus().register(new PlayerListener(this));
+        MinecraftForge.EVENT_BUS.register(new PlayerListener(this));
         connect = new Connect("ftb", new File("/home/mc/public/config/Connect/servers.txt"), this);
         connect.start();
-        FMLCommonHandler.instance().bus().register(this);
+        MinecraftForge.EVENT_BUS.register(this);
     }
 
     @EventHandler
@@ -103,10 +131,10 @@ public class UtilMod extends AbstractConnectHandler
 
     List<OnlinePlayer> onlinePlayers() {
         List<OnlinePlayer> result = new ArrayList<OnlinePlayer>();
-        for (Object o: MinecraftServer.getServer().getConfigurationManager().playerEntityList) {
+        for (Object o: getServer().getPlayerList().getPlayerList()) {
             if (!(o instanceof EntityPlayer)) continue;
             EntityPlayer player = (EntityPlayer)o;
-            OnlinePlayer onlinePlayer = new OnlinePlayer(player.getUniqueID(), player.getCommandSenderName());
+            OnlinePlayer onlinePlayer = new OnlinePlayer(player.getUniqueID(), player.getCommandSenderEntity().getName());
             result.add(onlinePlayer);
         }
         return result;
@@ -158,11 +186,31 @@ public class UtilMod extends AbstractConnectHandler
         ChatMessage message = new ChatMessage();
         if (player != null) {
             message.sender = player.getUniqueID();
-            message.senderName = player.getCommandSenderName();
+            message.senderName = player.getCommandSenderEntity().getName();
         }
         message.senderServer = "ftb";
         message.senderServerDisplayName = "FTB";
         message.message = text;
         return message;
+    }
+
+    static String getCommandSenderName(EntityPlayer player){
+        return player.getCommandSenderEntity().getName();
+    }
+
+    static MinecraftServer getServer(){
+        return FMLCommonHandler.instance().getMinecraftServerInstance();
+    }
+
+    static String colorConvert(String message){
+        for(String key : colorStrings.keySet()){
+            message = message.replaceAll(key, colorStrings.get(key));
+        }
+        return message;
+    }
+
+    static void addChatMessage(ICommandSender receiver, String message){
+        message = colorConvert(message);
+        receiver.addChatMessage(new TextComponentString(message));
     }
 }

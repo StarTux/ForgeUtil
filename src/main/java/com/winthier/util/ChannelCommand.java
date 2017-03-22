@@ -1,19 +1,16 @@
 package com.winthier.util;
 
 import com.winthier.connect.Connect;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+
+import java.util.*;
+
 import net.minecraft.command.CommandBase;
+import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.ChatComponentText;
-import net.minecraft.util.ChunkCoordinates;
+import net.minecraft.util.text.TextComponentString;
 
 public class ChannelCommand extends CommandBase
 {
@@ -44,11 +41,10 @@ public class ChannelCommand extends CommandBase
     }
 
     @Override
-    public void processCommand(ICommandSender sender, String[] args)
-    {
+    public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
         EntityPlayerMP player = sender instanceof EntityPlayerMP ? (EntityPlayerMP)sender : null;
         if (player == null) {
-            sender.addChatMessage(new ChatComponentText("Player expected"));
+            sender.addChatMessage(new TextComponentString("Player expected"));
             return;
         }
         if (args.length == 0) return;
@@ -60,7 +56,7 @@ public class ChannelCommand extends CommandBase
     }
 
     @Override
-    public boolean canCommandSenderUseCommand(ICommandSender sender)
+    public boolean checkPermission(MinecraftServer server, ICommandSender sender)
     {
         if (sender instanceof EntityPlayerMP) {
             EntityPlayerMP player = (EntityPlayerMP)sender;
@@ -116,11 +112,13 @@ public class ChannelCommand extends CommandBase
         System.out.println(String.format("[Chat] [%s]%s: %s", name, message.senderName, message.message));
         String msg = colorizeMessage(message.message);
         msg = String.format(getFormatString(), message.senderName, msg);
-        for (Object o: MinecraftServer.getServer().getConfigurationManager().playerEntityList) {
+        for (Object o: UtilMod.getServer().getPlayerList().getPlayerList()) {
             if (!(o instanceof EntityPlayer)) continue;
             EntityPlayer player = (EntityPlayer)o;
+
+            //TODO: fix mod chat permission
             if (!Perm.instance().playerHasPermission(player.getUniqueID(), "chat.channel." + name)) continue;
-            player.addChatMessage(new ChatComponentText(msg));
+            UtilMod.addChatMessage(player, msg);
         }
     }
 }

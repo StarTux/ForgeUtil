@@ -2,19 +2,15 @@ package com.winthier.util;
 
 import com.winthier.connect.Connect;
 import com.winthier.connect.OnlinePlayer;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import net.minecraft.command.CommandBase;
+import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.ChatComponentText;
-import net.minecraft.util.ChunkCoordinates;
+import net.minecraft.util.text.TextComponentString;
 
 public class WhisperCommand extends CommandBase
 {
@@ -42,11 +38,10 @@ public class WhisperCommand extends CommandBase
     }
 
     @Override
-    public void processCommand(ICommandSender sender, String[] args)
-    {
+    public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
         EntityPlayerMP player = sender instanceof EntityPlayerMP ? (EntityPlayerMP)sender : null;
         if (player == null) {
-            sender.addChatMessage(new ChatComponentText("Player expected"));
+            sender.addChatMessage(new TextComponentString("Player expected"));
             return;
         }
         if (args.length < 2) return;
@@ -57,7 +52,7 @@ public class WhisperCommand extends CommandBase
         String targetName = args[0];
         OnlinePlayer op = Connect.getInstance().findOnlinePlayer(targetName);
         if (op == null) {
-            sender.addChatMessage(new ChatComponentText("Player not found: " + targetName));
+            sender.addChatMessage(new TextComponentString("Player not found: " + targetName));
             return;
         }
         message.target = op.getUuid();
@@ -66,7 +61,7 @@ public class WhisperCommand extends CommandBase
     }
 
     @Override
-    public boolean canCommandSenderUseCommand(ICommandSender sender)
+    public boolean checkPermission(MinecraftServer server, ICommandSender sender)
     {
         if (sender instanceof EntityPlayerMP) {
             EntityPlayerMP player = (EntityPlayerMP)sender;
@@ -76,10 +71,10 @@ public class WhisperCommand extends CommandBase
     }
 
     EntityPlayer getPlayerForUsername(String name) {
-        for (Object o: MinecraftServer.getServer().getConfigurationManager().playerEntityList) {
+        for (Object o: UtilMod.getServer().getPlayerList().getPlayerList()) {
             if (!(o instanceof EntityPlayer)) continue;
             EntityPlayer p = (EntityPlayer)o;
-            if (p.getCommandSenderName().equalsIgnoreCase(name)) return p;
+            if (UtilMod.getCommandSenderName(p).equalsIgnoreCase(name)) return p;
         }
         return null;
     }
@@ -106,9 +101,9 @@ public class WhisperCommand extends CommandBase
         if (player == null) return;
         String msg = colorizeMessage(message.message);
         if (ack) {
-            player.addChatMessage(new ChatComponentText(String.format("§dTo %s(%s): %s", message.senderName, message.senderServerDisplayName, msg)));
+            UtilMod.addChatMessage(player, String.format("§dTo %s(%s): %s", message.senderName, message.senderServerDisplayName, msg));
         } else {
-            player.addChatMessage(new ChatComponentText(String.format("§dFrom %s(%s): %s", message.senderName, message.senderServerDisplayName, msg)));
+            UtilMod.addChatMessage(player,String.format("§dFrom %s(%s): %s", message.senderName, message.senderServerDisplayName, msg));
             sendAck(message, player);
         }
     }
@@ -118,7 +113,7 @@ public class WhisperCommand extends CommandBase
         message.target = message.sender;
         message.targetName = message.senderName;
         message.sender = player.getUniqueID();
-        message.senderName = player.getCommandSenderName();
+        message.senderName = UtilMod.getCommandSenderName(player);
         message.senderTitle = null;
         message.senderTitleDescription = null;
         message.senderServer = "ftb";
