@@ -56,6 +56,8 @@ public class SimpleTeleporter extends Teleporter {
 			worldServer.spawnEntityInWorld(player);
 			worldServer.updateEntityWithOptionalForce(player, false);
 		}
+		player.setInvisible(true);
+		player.setInvisible(false);
 	}
 
 	public static void teleportToPlayer(EntityPlayerMP teleporter, EntityPlayerMP destination){
