@@ -5,10 +5,10 @@ import com.winthier.connect.packet.*;
 import java.io.File;
 import java.util.*;
 
-import ibxm.Player;
+import com.winthier.util.tpa.TPAAcceptCommand;
+import com.winthier.util.tpa.TPACommand;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
@@ -80,6 +80,8 @@ public class UtilMod extends AbstractConnectHandler
     {
         // event.registerServerCommand(new KitCommand());
         event.registerServerCommand(new OpmeCommand());
+        event.registerServerCommand(new TPAAcceptCommand());
+        event.registerServerCommand(new TPACommand());
         for (ChannelCommand channel: chatChannels) {
             event.registerServerCommand(channel);
         }
