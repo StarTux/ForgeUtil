@@ -1,9 +1,12 @@
 package com.winthier.util.border;
 
+import com.winthier.util.Location;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fml.common.FMLCommonHandler;
+import org.apache.commons.collections4.queue.CircularFifoQueue;
 
 public class Border {
 	@Getter
@@ -43,6 +46,20 @@ public class Border {
 	public boolean isOutside(int dimension, double x, double z){
 		if(dimension != dimID) return false;
 		return x > radius || x < negRadius || z > radius || z < negRadius;
+	}
+
+	//return a location of the given queue that's inside the border
+	//if none is found, returns the location of the world's spawn point.
+	public Location push(CircularFifoQueue<Location> recentLocs ){
+		for (int i = 0; i < recentLocs.maxSize(); i++) {
+			Location location = recentLocs.get(i);
+			if(location != null && !isOutside(location.dimension, location.x, location.z)){
+				return location;
+			}
+		}
+		BlockPos pos = FMLCommonHandler.instance().getMinecraftServerInstance()
+				.worldServerForDimension(recentLocs.peek().dimension).getSpawnPoint();
+		return new Location(recentLocs.peek().dimension, pos.getX(), pos.getY(), pos.getZ());
 	}
 
 	//TODO eh, maybe

@@ -45,6 +45,7 @@ public class BorderCommand extends CommandBase{
 		} catch (IllegalArgumentException e){
 			e.printStackTrace();
 			argumentError(sender, "Dimension " + dimID + "has no registered world provider");
+			return;
 		}
 	}
 

@@ -4,10 +4,13 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.winthier.util.UtilMod;
 import com.winthier.util.tpa.SimpleTeleporter;
-import lombok.AllArgsConstructor;
+import com.winthier.util.Location;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.util.text.TextComponentString;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+import org.apache.commons.collections4.queue.CircularFifoQueue;
 
 import java.io.*;
 import java.lang.reflect.Type;
@@ -15,9 +18,10 @@ import java.util.*;
 
 public class BorderManager {
 	final String fileName = "borders.json";
+	static final int QUEUESIZE = 20;
 	static BorderManager instance;
 	HashMap<Integer, Border> worldborders = new HashMap<Integer, Border>();
-	Map<UUID, Location> lastTickLocations = new HashMap<UUID, Location>();
+	Map<UUID, CircularFifoQueue<Location>> lastTickLocations = new HashMap<UUID, CircularFifoQueue<Location>>();
 	Gson gson = new Gson();
 
 	public BorderManager(){
@@ -25,29 +29,45 @@ public class BorderManager {
 		loadBorders();
 	}
 
-	@SubscribeEvent
+	@SubscribeEvent (priority = EventPriority.NORMAL)
 	public void onPlayerUpdate(TickEvent.PlayerTickEvent event){
 		if(!event.phase.equals(TickEvent.Phase.END)) return;
 		EntityPlayerMP player = event.player instanceof  EntityPlayerMP ? (EntityPlayerMP) event.player : null;
 		if(player == null) return;
 		Location lastLocation = getLastLocation(player);
-		lastTickLocations.put(player.getUniqueID(), new Location(player.dimension, player.posX, player.posY, player.posZ)); //update for next tick, don't use again this tick
 		if(getBorder(player.dimension).isOutside(player)) {
-			UtilMod.debugMessage("Player is outside the border!");
 			if (player.dimension != lastLocation.dimension) {
 				SimpleTeleporter.teleportToDimension(player, lastLocation.dimension, lastLocation.x, lastLocation.y, lastLocation.z);
 			} else {
-				player.setPositionAndUpdate(lastLocation.x, lastLocation.y, lastLocation.z);
+				Location location = getBorder(player.dimension).push(lastTickLocations.get(player.getUniqueID()));
+				player.setPositionAndUpdate(location.x, location.y, location.z);
 			}
+			player.addChatMessage(new TextComponentString("This is the world border!"));
 		}
-		lastTickLocations.put(player.getUniqueID(), new Location(player.dimension, player.posX, player.posY, player.posZ));
+	}
+
+	@SubscribeEvent(priority = EventPriority.HIGHEST)
+	public void afterPlayerUpdate(TickEvent.PlayerTickEvent event){
+		if(!event.phase.equals(TickEvent.Phase.END)) return;
+		EntityPlayerMP player = (EntityPlayerMP) event.player;
+		setLastLoction(player, new Location(player.dimension, player.posX, player.posY, player.posZ));
 	}
 
 	public Location getLastLocation(EntityPlayerMP player){
-		if(lastTickLocations.get(player.getUniqueID()) == null){
-			lastTickLocations.put(player.getUniqueID(), new Location(player.dimension, player.posX, player.posY, player.posZ));
+		CircularFifoQueue<Location> queue = lastTickLocations.get(player.getUniqueID());
+		if(queue == null){
+			queue = new CircularFifoQueue<Location>(QUEUESIZE);
+			queue.add(new Location(player.dimension, player.posX, player.posY, player.posZ));
+			lastTickLocations.put(player.getUniqueID(), queue);
 		}
-		return lastTickLocations.get(player.getUniqueID());
+		return queue.peek();
+	}
+
+	public void setLastLoction(EntityPlayerMP player, Location location){
+		CircularFifoQueue<Location> queue = lastTickLocations.get(player.getUniqueID());
+		if(queue == null) queue = new CircularFifoQueue<Location>(QUEUESIZE);
+		queue.add(location);
+		lastTickLocations.put(player.getUniqueID(), queue);
 	}
 
 	//returns null if there is no dimension
@@ -69,7 +89,7 @@ public class BorderManager {
 
 	public void loadBorders() {
 		File file = new File(UtilMod.configDirectory.getPath() + File.separator + fileName);
-		if(!file.exists()) try {file.createNewFile();} catch (IOException e) {e.printStackTrace();}
+		if(!file.exists()) try {file.createNewFile();} catch (IOException e) {e.printStackTrace(); return;}
 		InputStream is = null;
 		BufferedReader buf = null;
 		StringBuilder sb = new StringBuilder();
@@ -122,13 +142,5 @@ public class BorderManager {
 
 	public BorderManager getInstance(){
 		return this;
-	}
-
-	@AllArgsConstructor
-	class Location {
-		int dimension;
-		double x;
-		double y;
-		double z;
 	}
 }

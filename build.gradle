@@ -39,6 +39,7 @@ dependencies {
     //compile "some.group:artifact:version:classifier"
     //compile "some.group:artifact:version"
     compile 'org.projectlombok:lombok:1.16.4'
+    compile 'org.apache.commons:commons-collections4:4.1'
       
     // real examples
     //compile 'com.mod-buildcraft:buildcraft:6.0.8:dev'  // adds buildcraft to the dev env
