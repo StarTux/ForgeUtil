@@ -54,6 +54,7 @@ public class TPACommand extends CommandBase {
 		teleportRequests.put(player.getUniqueID(), new RequestInfo(player.getUniqueID(), destination.getUniqueID()));
 		player.addChatMessage(new TextComponentString("You sent a TP request to " + destination.getName()));
 		destination.addChatMessage(new TextComponentString(player.getName() + " wants to TP to you. "));
+		//too lazy to make a map, used online message generator
 		String acceptString = "tellraw " + destination.getName() +
 				" [\"\",{\"text\":\"[Click here]\",\"color\":\"aqua\"," +
 					"\"clickEvent\":{\"action\":\"run_command\",\"value\":\"/accept " + player.getName() + "\"}," +

@@ -5,18 +5,24 @@ import com.winthier.connect.packet.*;
 import java.io.File;
 import java.util.*;
 
+import com.winthier.util.border.BorderCommand;
+import com.winthier.util.border.BorderManager;
 import com.winthier.util.tpa.TPAAcceptCommand;
 import com.winthier.util.tpa.TPACommand;
+import com.winthier.util.tpa.WinTPCommand;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -26,6 +32,10 @@ public class UtilMod extends AbstractConnectHandler
 {
     public static final String MODID = "util";
     public static final String VERSION = "0.1";
+    public static Configuration config;
+    public static UtilMod instance;
+    public static File configDirectory;
+    public static final Map<String, String> colorStrings = new HashMap<String, String>();
     final Perm perm = new Perm(this);
     Connect connect = null;
     final List<ChatMessage> chatMessages = Collections.synchronizedList(new ArrayList<ChatMessage>());
@@ -39,7 +49,6 @@ public class UtilMod extends AbstractConnectHandler
     final WhisperCommand whisperCommand = new WhisperCommand();
     final OnlineListCommand onlineListCommand = new OnlineListCommand();
     long ticks = 0;
-    static final Map<String, String> colorStrings = new HashMap<String, String>();
 
     static{
         colorStrings.put("§0", TextFormatting.BLACK.toString());
@@ -65,14 +74,35 @@ public class UtilMod extends AbstractConnectHandler
         colorStrings.put("§o", TextFormatting.ITALIC.toString());
         colorStrings.put("§r", TextFormatting.RESET.toString());
     }
+
+    public UtilMod(){
+        instance = this;
+    }
     
     @EventHandler
     public void init(FMLInitializationEvent event)
     {
-        MinecraftForge.EVENT_BUS.register(new PlayerListener(this));
-        connect = new Connect("ftb", new File("/home/mc/public/config/Connect/servers.txt"), this);
-        connect.start();
+        if(!Config.isDebug){
+            MinecraftForge.EVENT_BUS.register(new PlayerListener(this));
+            connect = new Connect("ftb", new File("/home/mc/public/config/Connect/servers.txt"), this);
+            connect.start();
+        }
         MinecraftForge.EVENT_BUS.register(this);
+        MinecraftForge.EVENT_BUS.register(new BorderManager());
+    }
+
+    @EventHandler
+    public void preInit(FMLPreInitializationEvent event) {
+        configDirectory = event.getModConfigurationDirectory();
+        config = new Configuration(new File(configDirectory.getPath(), "utils.cfg"));
+        Config.readConfig();
+    }
+
+    @EventHandler
+    public void postInit(FMLPostInitializationEvent event) {
+        if (config.hasChanged()) {
+            config.save();
+        }
     }
 
     @EventHandler
@@ -82,6 +112,8 @@ public class UtilMod extends AbstractConnectHandler
         event.registerServerCommand(new OpmeCommand());
         event.registerServerCommand(new TPAAcceptCommand());
         event.registerServerCommand(new TPACommand());
+        event.registerServerCommand(new WinTPCommand());
+        event.registerServerCommand(new BorderCommand());
         for (ChannelCommand channel: chatChannels) {
             event.registerServerCommand(channel);
         }
@@ -214,5 +246,9 @@ public class UtilMod extends AbstractConnectHandler
     static void addChatMessage(ICommandSender receiver, String message){
         message = colorConvert(message);
         receiver.addChatMessage(new TextComponentString(message));
+    }
+
+    public static void debugMessage(String message){
+        if(Config.isDebug) System.out.println(message);
     }
 }
