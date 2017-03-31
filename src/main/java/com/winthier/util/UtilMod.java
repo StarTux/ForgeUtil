@@ -35,7 +35,6 @@ public class UtilMod extends AbstractConnectHandler
     public static Configuration config;
     public static UtilMod instance;
     public static File configDirectory;
-    public static final Map<String, String> colorStrings = new HashMap<String, String>();
     final Perm perm = new Perm(this);
     Connect connect = null;
     final List<ChatMessage> chatMessages = Collections.synchronizedList(new ArrayList<ChatMessage>());
@@ -49,6 +48,7 @@ public class UtilMod extends AbstractConnectHandler
     final WhisperCommand whisperCommand = new WhisperCommand();
     final OnlineListCommand onlineListCommand = new OnlineListCommand();
     long ticks = 0;
+    static final Map<String, String> colorStrings = new HashMap<String, String>();
 
     static{
         colorStrings.put("§0", TextFormatting.BLACK.toString());
@@ -82,7 +82,7 @@ public class UtilMod extends AbstractConnectHandler
     @EventHandler
     public void init(FMLInitializationEvent event)
     {
-        if(!Config.isDebug){
+        if(!Config.isDebug) {
             MinecraftForge.EVENT_BUS.register(new PlayerListener(this));
             connect = new Connect("ftb", new File("/home/mc/public/config/Connect/servers.txt"), this);
             connect.start();

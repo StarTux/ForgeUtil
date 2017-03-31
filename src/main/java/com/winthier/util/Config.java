@@ -17,10 +17,8 @@ public class Config extends Configuration{
 			cfg.load();
 			initGeneralConfig(cfg);
 		} catch (Exception e1) {
-			System.out.println("\n\n\n\n**********************ERROR SAVING CONFIG************************\n\n\n\n");
 		} finally {
 			if (cfg.hasChanged()) {
-				System.out.println("\n\n\n\n**********************SAVING CONFIG************************\n\n\n\n");
 				cfg.save();
 			}
 		}
