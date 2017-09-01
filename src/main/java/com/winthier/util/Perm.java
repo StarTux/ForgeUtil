@@ -89,45 +89,48 @@ public class Perm
         return sb.toString();
     }
 
-    private List<String> fetchPermsOfPlayer(UUID uuid)
-    {
-        Connection connection = connect("jdbc:mysql://127.0.0.1:3306/zPermissions");
-        String uuidString = "\"" + uuid.toString().replace("-", "") + "\"";
+    private List<String> fetchPermsOfPlayer(UUID uuid) {
+        Connection connection = connect("jdbc:mysql://127.0.0.1:3306/Perm");
+        String uuidString = "\"" + uuid.toString() + "\"";
         Statement stmt = null;
         ResultSet result = null;
-        Set<Integer> entityIds = new HashSet<Integer>();
+        Set<String> groups = new HashSet<String>();
+        Map<String, String> parents = new HashMap<String, String>();
         List<String> perms = new ArrayList<String>();
         try {
-            // get entity row (entities)
+            // get group memberships
             stmt = connection.createStatement();
-            result = stmt.executeQuery("SELECT * FROM entities WHERE name = " + uuidString);
+            result = stmt.executeQuery("SELECT group FROM members WHERE member = " + uuidString);
             while (result.next()) {
-                entityIds.add(result.getInt("id"));
+                groups.add(result.getString("group").toLowerCase());
             }
             stmt.close();
             // get all memberships (memberships => entities)
             stmt = connection.createStatement();
-            result = stmt.executeQuery("SELECT * FROM memberships WHERE member = " + uuidString);
+            result = stmt.executeQuery("SELECT * FROM groups");
             while (result.next()) {
-                entityIds.add(result.getInt("group_id"));
+                String child = result.getString("key");
+                String parent = result.getString("parent");
+                if (!result.wasNull()) {
+                    parents.put(child, parent);
+                }
             }
             stmt.close();
-            // get all inheritances (inheritances => entities)
-            HashSet<Integer> tmpIds = new HashSet<Integer>();
-            tmpIds.addAll(entityIds);
-            while (!tmpIds.isEmpty()) {
-                stmt = connection.createStatement();
-                result = stmt.executeQuery("SELECT * FROM inheritances WHERE child_id IN " + sqlSet(tmpIds));
-                tmpIds.clear();
-                while (result.next()) {
-                    tmpIds.add(result.getInt("parent_id"));
+            // Inherit
+            boolean foundSomething;
+            do {
+                foundSomething = false;
+                for (String group: new ArrayList<String>(groups)) {
+                    String parent = parents.get(group);
+                    if (parent != null && !groups.contains(parent)) {
+                        groups.add(parent);
+                        foundSomething = true;
+                    }
                 }
-                entityIds.addAll(tmpIds);
-                stmt.close();
-            }
+            } while (foundSomething);
             // get all entries (entries)
             stmt = connection.createStatement();
-            result = stmt.executeQuery("SELECT * FROM entries WHERE world_id IS NULL AND region_id IS NULL AND entity_id IN " + sqlSet(entityIds));
+            result = stmt.executeQuery("SELECT * FROM permissions WHERE is_group = 1 AND value = 1 AND entity IN " + sqlSet(groups));
             while (result.next()) {
                 perms.add(result.getString("permission"));
             }
