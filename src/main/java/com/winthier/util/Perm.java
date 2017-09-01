@@ -100,7 +100,7 @@ public class Perm
         try {
             // get group memberships
             stmt = connection.createStatement();
-            result = stmt.executeQuery("SELECT group FROM members WHERE member = " + uuidString);
+            result = stmt.executeQuery("SELECT * FROM members WHERE member = " + uuidString);
             while (result.next()) {
                 groups.add(result.getString("group").toLowerCase());
             }
