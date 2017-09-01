@@ -80,10 +80,10 @@ public class Perm
         StringBuilder sb = new StringBuilder();
         sb.append("(");
         Iterator<? extends Object> iter = set.iterator();
-        if (iter.hasNext()) sb.append(iter.next().toString());
+        if (iter.hasNext()) sb.append("'" + iter.next().toString() + "'");
         while (iter.hasNext()) {
             sb.append(", ");
-            sb.append(iter.next().toString());
+            sb.append("'" + iter.next().toString() + "'");
         }
         sb.append(")");
         return sb.toString();
