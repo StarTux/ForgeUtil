@@ -108,12 +108,13 @@ public class UtilMod extends AbstractConnectHandler
     @EventHandler
     public void serverLoad(FMLServerStartingEvent event)
     {
-        // event.registerServerCommand(new KitCommand());
+        //event.registerServerCommand(new KitCommand());
         event.registerServerCommand(new OpmeCommand());
         event.registerServerCommand(new TPAAcceptCommand());
         event.registerServerCommand(new TPACommand());
         event.registerServerCommand(new WinTPCommand());
         event.registerServerCommand(new BorderCommand());
+        event.registerServerCommand(new StopRainCommand());
         for (ChannelCommand channel: chatChannels) {
             event.registerServerCommand(channel);
         }
